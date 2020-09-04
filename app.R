@@ -3,6 +3,7 @@ library(shinydashboard)
 library(sparkline)
 library(jsonlite)
 library(dplyr)
+source('global.R')
 
 header <- dashboardHeader(title="Databrew app")
 sidebar <- dashboardSidebar(
