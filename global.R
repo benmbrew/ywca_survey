@@ -1,7 +1,8 @@
 library(tidyverse)
 
+
 # read in data
-dat <- read.csv('Gun Violence Impact Survey  (Responses) - Form responses 1.csv')
+dat <- read.csv('Gun Violence Impact Survey  (Responses) - Form responses 1.csv', stringsAsFactors = FALSE)
 dat$Timestamp <- NULL
 
 # create question dictionary 
@@ -27,14 +28,29 @@ string_dat <- dat[ ,string_cols]
 
 rm(dat)
 
+# count how many commas
+#apply(cat_dat, 2, function(x) length(which(grepl(',', x, fixed = TRUE))))
+
+# recode column to make all unique answers without commas 
+#  Racialized (Black, West Asian, North African, East Asian, South Asian, Latinx, etc.),
+# Indigenous (First Nations, Inuit, Metis)
+cat_dat$V5 <- gsub('Racialized (Black, West Asian, North African, East Asian, South Asian, Latinx, etc.)', 'Racialized', cat_dat$V5, fixed = TRUE)
+cat_dat$V5 <- gsub('Indigenous (First Nations, Inuit, Metis)', 'Indigenous', cat_dat$V5, fixed = TRUE)
+
+# find other variables with same issue and fix
+
+
 ######### ----------------
 # clean data
 
 # loop through columns and create new variables accordingly based on if multiple answers
-i = 10
-column_names <- names(dat)
-for(i in 1:ncol(dat)){
+i = 5
+column_names <- names(cat_dat)
+for(i in 1:ncol(cat_dat)){
   this_column <- column_names[i]
-  sub_col <- dat[,this_column]
-  
+  sub_col <- cat_dat[,this_column]
+  is_multiple <- length(which(grepl(',', sub_col, fixed = TRUE))) > 5
+  if(is_multiple){
+    sub_col = ifelse(grepl('primarily boys', sub_col), 'prim')
+  }
 }
