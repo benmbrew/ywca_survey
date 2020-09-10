@@ -84,28 +84,43 @@ plot_summarise <- function(plot_dat){
   
 }
 
-# function for exploring relationships between multiple variables 
-explore_comparisons <- function(temp,
-                                question_list,
-                                answer_filter_1, 
-                                answer_filter_2, 
-                                answer_filter_3){
-  
-  # group by question list 
-  temp <- temp %>% filter(question %in% question_list)
-  temp$answer <- as.character(temp$answer)
-  temp <-temp %>% filter(answer %in% c(answer_filter_1, answer_filter_2, answer_filter_3))
-  temp <- spread(temp, key = question, value = answer)
-  names(temp)[3:5] <- paste0('V', 1:3)
-  temp <- temp %>% group_by(V1, V2, V3) %>% summarise(counts = n())
-  names(temp)[1:3] <- question_list
-  
-  return(temp)
-  
+
+get_table <- function(temp_dat, column_names){
+  temp_dat <- temp_dat %>% filter(question %in% column_names)
+  temp_dat <- spread(temp_dat, key=question, value=answer)
+  names(temp_dat)[3:4] <- paste0('V', 1:2)
+  temp_dat <- temp_dat %>% group_by(V1, V2) %>% summarise(counts=n())
+  names(temp_dat)[1:2] <- column_names
+  return(temp_dat)
 }
 
-explore_comparisons(temp = dat,
-                    question_list =c('V1', 'V5', 'V6'),
-                    answer_filter_1 = 'Social worker',
-                    answer_filter_2 = 'Women',
-                    answer_filter_3 = 'Yes' )
+# v2 and v6 have 
+dat_v2v6 <- get_table(temp_dat = dat, column_names = c('V2', 'V6'))
+
+
+
+# # function for exploring relationships between multiple variables 
+# explore_comparisons <- function(temp,
+#                                 question_list,
+#                                 answer_filter_1, 
+#                                 answer_filter_2){
+#   
+#   # group by question list 
+#   temp <- temp %>% filter(question %in% question_list)
+#   temp$answer <- as.character(temp$answer)
+#   temp <-temp %>% filter(answer %in% c(answer_filter_1, answer_filter_2))
+#   temp <- spread(temp, key = question, value = answer)
+#   names(temp)[3:4] <- paste0('V', 1:2)
+#   temp <- temp %>% group_by(V1, V2) %>% summarise(counts = n())
+#   names(temp)[1:2] <- question_list
+#   
+#   return(temp)
+#   
+# }
+
+
+
+# temp1 <- explore_comparisons(temp = dat,
+#                     question_list =c('V2', 'V6'),
+#                     answer_filter_1 = '1',
+#                     answer_filter_2 = 'Yes')
