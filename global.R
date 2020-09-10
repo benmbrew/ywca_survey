@@ -80,9 +80,25 @@ dat <- do.call(rbind, dat_list)
 dat <- dat %>% filter(value == 1)
 
 # function for plottng summary of one variable
-plot_summarise <- function(plot_dat){
-  
+
+plot_summarise <- function(plot_dat, var_name){
+  plot_dat <- plot_dat %>% filter(question == var_name) %>%
+    group_by(answer) %>% summarise(counts = n())
+  plot_dat$total <- sum(plot_dat$counts)
+  plot_dat$per <- round((plot_dat$counts/plot_dat$total)*100, 2)
+  plot_dat$answer <- as.character(plot_dat$answer)
+  return(plot_dat)
 }
+
+dat_v5 <- plot_summarise(plot_dat = dat, var_name = 'V5')
+
+# subset by counts
+dat_v5 <- dat_v5 %>% filter(counts > 1)
+# recode other
+# and a mix of other communities. 
+dat_v5$answer <- ifelse(grepl('and a mix of other communit|Anyone with men', dat_v5$answer), 'Other', dat_v5$answer)
+
+ggplot(dat_v5, aes(answer, per)) + geom_bar(stat = 'identity')
 
 
 get_table <- function(temp_dat, column_names){
