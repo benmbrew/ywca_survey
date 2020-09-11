@@ -49,7 +49,7 @@ cat_dat$V15 <- gsub('Toolkit on how to navigate trauma, deal with media, find co
 cat_dat$V4 <- cat_dat$V9 <- NULL
 
 # loop through columns and create new variables accordingly based on if multiple answers
-i = 8
+i = 4
 column_names <- names(cat_dat)
 dat_list <- list()
 for(i in 1:ncol(cat_dat)){
@@ -79,9 +79,15 @@ for(i in 1:ncol(cat_dat)){
 dat <- do.call(rbind, dat_list)
 dat <- dat %>% filter(value == 1)
 
-# function for plottng summary of one variable
+# clean columns
+dat$answer <-trimws(dat$answer, which = 'both')
 
+
+# function for plottng summary of one variable
+plot_dat <- dat
+var_name = 'V5'
 plot_summarise <- function(plot_dat, var_name){
+
   plot_dat <- plot_dat %>% filter(question == var_name) %>%
     group_by(answer) %>% summarise(counts = n())
   plot_dat$total <- sum(plot_dat$counts)
@@ -91,13 +97,34 @@ plot_summarise <- function(plot_dat, var_name){
 }
 
 dat_v5 <- plot_summarise(plot_dat = dat, var_name = 'V5')
+dat_v12 <- plot_summarise(plot_dat = dat, var_name = 'V12')
+dat_v7 <- plot_summarise(plot_dat = dat, var_name = 'V7')
+dat_v31 <- plot_summarise(plot_dat = dat, var_name = 'V31')
+dat_v15 <- plot_summarise(plot_dat = dat, var_name = 'V15')
+
 
 # subset by counts
 dat_v5 <- dat_v5 %>% filter(counts > 1)
 # recode other
 # and a mix of other communities. 
-dat_v5$answer <- ifelse(grepl('and a mix of other communit|Anyone with men', dat_v5$answer), 'Other', dat_v5$answer)
+dat_v5$answer <- ifelse(grepl('and a mix of other communit|Mental|homeless|gender|violence|
+                              Any Person who identifies|We see and serve|Any Person who|mental health|Children|who identifies', dat_v5$answer), 
+                        'Other', dat_v5$answer)
 
+dat_v15$answer <- ifelse(grepl('All that are listed |another record|ensure basic needs|Families and|Financial|goal/passion|Support/treatment', dat_v15$answer), 
+                        'Other', dat_v15$answer)
+  
+# get unique counts 
+dat_v5 <- dat_v5 %>% group_by(answer) %>% summarise(counts = sum(counts))
+dat_v5$tot <- sum(dat_v5$counts)
+dat_v5$per <- round((dat_v5$counts/dat_v5$tot)*100,2)
+
+dat_v15 <- dat_v15 %>% group_by(answer) %>% summarise(counts = sum(counts))
+dat_v15$tot <- sum(dat_v15$counts)
+dat_v15$per <- round((dat_v15$counts/dat_v15$tot)*100,2)
+
+
+# make bar plot
 ggplot(dat_v5, aes(answer, per)) + geom_bar(stat = 'identity')
 
 
@@ -111,7 +138,7 @@ get_table <- function(temp_dat, column_names){
 }
 
 # v2 and v6 have 
-dat_v2v6 <- get_table(temp_dat = dat, column_names = c('V2', 'V6'))
+dat_v7v12 <- get_table(temp_dat = dat, column_names = c('V7', 'V12'))
 
 
 
