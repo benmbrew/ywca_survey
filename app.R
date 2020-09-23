@@ -54,24 +54,28 @@ body <- dashboardBody(
       tabName="double",
       fluidPage(
         fluidRow(
-          column(2, 
+          column(4, 
                  selectInput('q1_double', 
                              'Choose a question', 
                              choices = unique(dat$question), 
                              selected = 'In your area of work  what community ies  do you serve'),
                  uiOutput('a1_double_ui'),
                  
-          ),
-          column(2, 
                  selectInput('q2_double', 
                              'Choose a question', 
                              choices = unique(dat$question), 
                              selected = 'Have you been personally affected by gun violence'),
-                 uiOutput('a2_double_ui'),
+                 uiOutput('a2_double_ui')
+                 
+                 
                  
           ),
+          
+          
+          
           column(8,
-                 DT::dataTableOutput('table_1'))
+                 # DT::dataTableOutput('table_1'),
+                 uiOutput('var_boxes'))
         )
         
       )
@@ -80,15 +84,15 @@ body <- dashboardBody(
       tabName="word",
       fluidPage(
         fluidRow(
-          column(2, 
+          column(4, 
                  selectInput('q_word', 
                              'Choose a question', 
                              choices = names(string_dat), 
-                             selected = 'What would help you better respond to the needs of clients and their families impacted by gun violence'),
-
+                             selected = 'How has this impacted your work performance'),
+                 
           ),
-          column(10,
-                 plotOutput('word_1', height = '600px'))
+          column(8,
+                 plotOutput('word_1', height = '800px', width = '1000px'))
         )
         
       )
@@ -195,7 +199,7 @@ server <- function(input, output) {
       dat_list[[i]] <- temp
       print(i)
     }
-   return(dat_list)
+    return(dat_list)
     
   })
   
@@ -249,19 +253,77 @@ server <- function(input, output) {
     
   })
   
-  # render datatable
-  output$table_1 <- DT::renderDataTable({
-    
+  output$var_boxes <- renderUI({
     # two_q_dat <- dat_list
-    a1 <- q1_answers[1]
-    a2 <- q2_answers[1]
+    # a1 <- q1_answers[1]
+    # a2 <- q2_answers[1]
     q2 <- input$q2_double
     q1 <- input$q1_double
     a1 <- input$a1_double
     a2 <- input$a2_double
     two_q_dat <- two_q()
     
+    
+    if(is.null(two_q_dat) |is.null(a1)|is.null(a2)){
+      NULL
+    } else {
+      # extract data and subset
+      q1_dat <- two_q_dat[[1]]
+      q2_dat <- two_q_dat[[2]]
+      q1_dat <- q1_dat %>% select(all_of(a1)) 
+      q2_dat <- q2_dat %>% select(all_of(a2))
+      q_dat <- as.data.frame(cbind(q1_dat, q2_dat))
+      q_dat <- as.data.frame(cbind(q1=q1_dat, q2=q2_dat))
+      q_dat <- as.data.frame(table(q_dat))
+      # q_dat <- as.data.frame(t(q_dat))
+      
+      # get titles
+      q1_title <- paste0(q1, ' =', a1)
+      q2_title<- paste0(q2, ' =', a2)
+      q_all_title <- paste0(a1, ' and ', a2)
+      
+      # get text
+      q1_text <- paste0(round((sum(q1_dat)/56)*100, 2), '%')
+      q2_text <- paste0(round((sum(q2_dat)/56)*100, 2), '%')
+      q_all_text <- paste0(round((q_dat$Freq[q_dat[,1] == 1 & q_dat[,2]==1]/56)*100, 2), '%')
+      
+      fluidPage(
+        fluidRow(
+          valueBox(
+            subtitle = q1_title, value = q1_text,
+            color = 'blue', width = 6),
+          valueBox(
+            subtitle = q_all_title, value=q_all_text,
+            color = 'red', width = 6)),
+        fluidRow(
+          valueBox(
+            subtitle = q2_title,value =  q2_text,
+            color = 'blue', width = 6)
+        )
+      )
+      
+      
+      
+      
+    }
+    
+  }) 
   
+  
+  
+  # render datatable
+  output$table_1 <- DT::renderDataTable({
+    
+    # two_q_dat <- dat_list
+    # a1 <- q1_answers[1]
+    # a2 <- q2_answers[1]
+    q2 <- input$q2_double
+    q1 <- input$q1_double
+    a1 <- input$a1_double
+    a2 <- input$a2_double
+    two_q_dat <- two_q()
+    
+    
     if(is.null(two_q_dat) |is.null(a1)|is.null(a2)){
       NULL
     } else {
@@ -276,21 +338,21 @@ server <- function(input, output) {
       names(q_dat)[1] <- paste0(q1, ' =', a1)
       names(q_dat)[2] <- paste0(q2, ' =', a2)
       DT::datatable(q_dat)
-     
+      
     }
   })
   
   #create word cloud from q_word input
   output$word_1 <- renderPlot({
-    q_word <- 'How has gun violence impacted your family  relationships  children and interaction with non family members'
+    q_word <- 'How has this impacted your work performance'
     q_word <- input$q_word
     temp <- string_dat %>% select(all_of(q_word))
     #Create a vector containing only the text
     text <- as.character(temp[,1])
-    text <- gsub("[\r\n]", "", text)
+    # text <- gsub("[\r\n]", "", text)
     text <- gsub("[[:punct:]]", "", text)
-    remove_text <- ' on| the| of| and| by|in | for| or| other| than|procedures|Under|Repair'
-    text <- gsub(remove_text, '', text, ignore.case = TRUE)
+    remove_text <- '^on$|the|and|^of|^and|^has|^by|^in|^you|for|yes|^yes|^or|^other|^than|where|are|^which|^but|^changed|what|available|about|not|most|get|feel|events|create|pay|given|how|with|helping|since|long|would|event|possibly|^any|^much|little|led|person|tell|lead|garing|sure|continue|allow|part|when|who|furr|having|time|that|from|knowing|since|^use|going|sense|thus|even|especially|outside|this|^ten|besides|own|more|becomes|was|were|had|while|lot|level|all|small|same|name|period|asking|might|its|not|years|waiting|the|how|several|enough|^out|^how|know|have'
+    text <- gsub(remove_text, '', text)
     # Create a corpus  
     docs <- Corpus(VectorSource(text))
     
